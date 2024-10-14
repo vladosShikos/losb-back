@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "losb-back"
+version = "0.1.0"
+description = ""
+authors = ["vlados_shikos <vladsyturinn@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django-environ = "^0.11.2"
+drf-spectacular = "^0.27.2"
+djangorestframework = "^3.15.2"
+django = "^5.1.2"
+drf-standardized-errors = {extras = ["openapi"], version = "^0.12.5"}
+django-filter = "^24.3"
+django-allauth = "^65.0.2"
+drf-spectacular-sidecar = "^2024.7.1"
+psycopg2-binary = "^2.9.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
