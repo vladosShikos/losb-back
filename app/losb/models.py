@@ -1,7 +1,22 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
-from django.contrib.auth.models import PermissionsMixin, UserManager
+from django.contrib.auth.models import PermissionsMixin
+from django.db.models import CASCADE, PROTECT
 from django.utils.translation import gettext_lazy as _
 from django.db import models
+
+
+class City(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return f'{self.name}'
+
+class Phone(models.Model):
+    code = models.PositiveSmallIntegerField()
+    phone = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f'+{self.code}{self.phone if self.phone else '-not-verified'}'
 
 class CustomUserManager(BaseUserManager):
     """
@@ -14,7 +29,8 @@ class CustomUserManager(BaseUserManager):
         """
         if not telegram_id:
             raise ValueError(_("The telegram_id must be set"))
-        user = self.model(telegram_id=telegram_id, **extra_fields)
+        phone = Phone.objects.create(code=7)
+        user = self.model(telegram_id=telegram_id, phone=phone, **extra_fields)
         user.set_password(password)
         user.save()
         return user
@@ -39,22 +55,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=255, blank=True, null=True)
     name = models.CharField(max_length=255)
     avatar = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
-    phone = models.CharField(max_length=20, null=True, blank=True)
+    phone = models.ForeignKey(Phone, on_delete=PROTECT,related_name='user')
     password = models.CharField(max_length=255, blank=True, null=True)
-
+    bday = models.DateTimeField(null=True) # TODO: check naming Igor used
+    city = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_login = None
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'telegram_id'
-    REQUIRED_FIELDS = ['Phone']
+    REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
-
-class Phone(models.Model):
-     code = models.PositiveSmallIntegerField()
-     phone = models.PositiveSmallIntegerField(blank=True)
-
-class City(models.Model):
-    city = models.CharField(max_length=255, unique=True)

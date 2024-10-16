@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'drf_spectacular_sidecar',
     'drf_standardized_errors',
+    'django_extensions',
     *PROJECT_APPS
 ]
 
@@ -107,9 +108,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'losb.api.v1.services.auth.ExampleAuthentication',
     ],
-    # 'DEFAULT_PERMISSION_CLASSES':[
-    #     'rest_framework.permissions.AllowAny'
-    # ],
+    'DEFAULT_PERMISSION_CLASSES':[
+        'rest_framework.permissions.AllowAny'
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 20,
 }
