@@ -5,10 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5f9d8cd9-15ce-4f40-af29-d6863480d5dd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/app/losb/api/v1/exceptions.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/losb/api/v1/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/losb/api/v1/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/losb/api/v1/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/losb/api/v1/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/losb/api/v1/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/losb/api/v1/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/losb/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/losb/models.py" afterDir="false" />
     </list>
@@ -67,7 +65,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.runserver">
+  <component name="RunManager" selected="Python.migrate">
     <configuration name="createsuperuser" type="PythonConfigurationType" factoryName="Python">
       <module name="losb-back" />
       <option name="ENV_FILES" value="" />
@@ -233,7 +231,15 @@
       <option name="project" value="LOCAL" />
       <updated>1729112676445</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="feat: bday view + exception">
+      <option name="closed" value="true" />
+      <created>1729115134914</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1729115134914</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -284,7 +290,8 @@
     <MESSAGE value="feat: proper auth" />
     <MESSAGE value="feat: proper settings" />
     <MESSAGE value="feat: cities import, views, serializers update" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: cities import, views, serializers update" />
+    <MESSAGE value="feat: bday view + exception" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: bday view + exception" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -332,11 +339,6 @@
           <url>file://$USER_HOME$/.cache/pypoetry/virtualenvs/losb-back-XfGSIawh-py3.12/lib/python3.12/site-packages/rest_framework/mixins.py</url>
           <line>65</line>
           <option name="timeStamp" value="19" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/losb/api/v1/views.py</url>
-          <line>99</line>
-          <option name="timeStamp" value="20" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

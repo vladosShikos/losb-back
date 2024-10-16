@@ -93,12 +93,12 @@ class UserBdayAPIView(APIView):
         description='Устанавливает дату рождения пользователя, если она ещё не была изменена',
     )
     def post(self, request):
-        serializer = UserBdaySerializer(data=self.request.data)
-        serializer.is_valid(raise_exception=True)
         if self.request.user.bday:
             raise BdayAlreadySet
-        self.request.user.bday = serializer.validated_data['bday']
-        self.request.user.save()
+
+        serializer = UserBdaySerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(self.request.user, serializer.validated_data)
         return Response(serializer.data)
 
 @extend_schema_view(
