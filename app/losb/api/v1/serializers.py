@@ -29,10 +29,8 @@ class UserCitySerializer(serializers.ModelSerializer):
         model = User
         fields = ('city',)
 
-class UserBdaySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('bday',)
+class UserBdaySerializer(serializers.Serializer):
+    bday = serializers.DateField()
 
 class UserPhoneSerializer(serializers.ModelSerializer):
     class Meta:

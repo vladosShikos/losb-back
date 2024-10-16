@@ -3,13 +3,17 @@ from __future__ import annotations
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from losb.api.v1.exceptions import BdayAlreadySet
 from losb.api.v1.serializers import (
     UserSerializer,
     UserNameSerializer,
     UserCitySerializer,
     UserBdaySerializer,
-    UserPhoneSerializer, CitySerializer,
+    UserPhoneSerializer,
+    CitySerializer,
 )
 from losb.models import City
 
@@ -76,20 +80,26 @@ class UserCityUpdateView(generics.UpdateAPIView):
     def get_object(self):
         return self.request.user
 
-@extend_schema_view(
-    update=extend_schema(
+class UserBdayAPIView(APIView):
+    http_method_names = ['post']
+    permission_classes = [IsAuthenticated, ]
+
+    @extend_schema(
+        request=UserBdaySerializer,
         responses={
             200: UserBdaySerializer,
         },
-        summary='Изменение даты рождения пользователя',
-    ),
-)
-class UserBdayUpdateView(generics.UpdateAPIView):
-    serializer_class = UserBdaySerializer
-    permission_classes = [IsAuthenticated,]
-    # TODO: allow only posting
-    def get_object(self):
-        return self.request.user
+        summary='Установить дату рождения пользователя',
+        description='Устанавливает дату рождения пользователя, если она ещё не была изменена',
+    )
+    def post(self, request):
+        serializer = UserBdaySerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        if self.request.user.bday:
+            raise BdayAlreadySet
+        self.request.user.bday = serializer.validated_data['bday']
+        self.request.user.save()
+        return Response(serializer.data)
 
 @extend_schema_view(
     update=extend_schema(

@@ -7,7 +7,7 @@ from losb.api.v1.views import (
     UserRetrieveView,
     UserNameUpdateView,
     UserCityUpdateView,
-    UserBdayUpdateView,
+    UserBdayAPIView,
     UserPhoneUpdateView,
     CityListView,
 )
@@ -24,6 +24,6 @@ urlpatterns = [
     path('user', UserRetrieveView.as_view(), name='user-detail'),
     path('user/name', UserNameUpdateView.as_view(), name='user-name'),
     path('user/city', UserCityUpdateView.as_view(), name='user-city'),
-    path('user/bday', UserBdayUpdateView.as_view(), name='user-bday'),
+    path('user/bday', UserBdayAPIView.as_view(), name='user-bday'),
     path('user/phone', UserPhoneUpdateView.as_view(), name='user-phone'),
 ]

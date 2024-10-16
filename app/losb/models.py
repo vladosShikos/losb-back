@@ -56,7 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     avatar = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
     phone = models.ForeignKey(Phone, on_delete=PROTECT,related_name='user')
-    password = models.CharField(max_length=255, blank=True, null=True)
+    password = models.CharField(max_length=255, null=True)
     bday = models.DateTimeField(null=True) # TODO: check naming Igor used
     city = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
