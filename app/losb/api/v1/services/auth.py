@@ -1,18 +1,18 @@
+from typing import Optional
+
 import jwt
-from django.utils.translation import gettext_lazy as _
-from jwt import InvalidTokenError
-from rest_framework import authentication
-from rest_framework import exceptions
-from typing import Optional, Set, Tuple, TypeVar
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractBaseUser
 from django.utils.translation import gettext_lazy as _
-from rest_framework import HTTP_HEADER_ENCODING, authentication
+from rest_framework import authentication
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.request import Request
-from rest_framework_simplejwt.exceptions import TokenError
 
 from app.settings import SECRET_KEY
+
+class TokenError(Exception):
+    pass
+
+class InvalidTokenError(Exception):
+    pass
 
 
 class ExampleAuthentication(authentication.BaseAuthentication):
@@ -57,11 +57,10 @@ class ExampleAuthentication(authentication.BaseAuthentication):
         except InvalidTokenError as ex:
             raise TokenError(_("Token is invalid or expired")) from ex
 
-
         try:
             User = get_user_model()
             user = User.objects.get(telegram_id=decoded_token.get('telegram_id'))
         except User.DoesNotExist:
-            raise exceptions.AuthenticationFailed('No such user')
+            raise AuthenticationFailed('No such user')
 
-        return (user, None)
+        return user, None
