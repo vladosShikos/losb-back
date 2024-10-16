@@ -14,9 +14,10 @@ class CitySerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     city = CitySerializer()
+    phone = PhoneSerializer()
     class Meta:
         model = User
-        fields = ('telegram_id','avatar','name', 'phone', 'city')
+        fields = ('telegram_id','avatar','name', 'phone', 'city', 'bday')
 
 class UserNameSerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,3 +39,6 @@ class UserPhoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = ('phone',)
+
+class BotUrlSerializer(serializers.Serializer):
+    url = serializers.CharField()

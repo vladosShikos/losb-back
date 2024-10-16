@@ -5,7 +5,9 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from losb.schema import TelegramIdJWTSchema
 
+from app import settings
 from losb.api.v1.exceptions import BdayAlreadySet
 from losb.api.v1.serializers import (
     UserSerializer,
@@ -13,7 +15,7 @@ from losb.api.v1.serializers import (
     UserCitySerializer,
     UserBdaySerializer,
     UserPhoneSerializer,
-    CitySerializer,
+    CitySerializer, BotUrlSerializer,
 )
 from losb.models import City
 
@@ -61,6 +63,7 @@ class UserRetrieveView(generics.RetrieveAPIView):
 class UserNameUpdateView(generics.UpdateAPIView):
     serializer_class = UserNameSerializer
     permission_classes = [IsAuthenticated,]
+    http_method_names = ["put"]
 
     def get_object(self):
         return self.request.user
@@ -76,6 +79,8 @@ class UserNameUpdateView(generics.UpdateAPIView):
 class UserCityUpdateView(generics.UpdateAPIView):
     serializer_class = UserCitySerializer
     permission_classes = [IsAuthenticated,]
+    http_method_names = ["put"]
+
 
     def get_object(self):
         return self.request.user
@@ -112,7 +117,23 @@ class UserBdayAPIView(APIView):
 class UserPhoneUpdateView(generics.UpdateAPIView):
     serializer_class = UserBdaySerializer
     permission_classes = [IsAuthenticated,]
+    http_method_names = ["put"]
+
     # TODO: change logic
     def get_object(self):
         return self.request.user
 
+@extend_schema_view(
+    get=extend_schema(
+        responses={
+            200: BotUrlSerializer,
+        },
+        summary='Cсылка на бота поддержки',
+    ),
+)
+class TechSupportAPIView(generics.RetrieveAPIView):
+    serializer_class = BotUrlSerializer
+    permission_classes = [IsAuthenticated,]
+
+    def get_object(self):
+        return {'url':settings.TECHSUPPORT_BOT_URL}
