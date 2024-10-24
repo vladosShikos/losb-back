@@ -48,7 +48,10 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_("Superuser must have is_superuser=True."))
         return self.create_user(telegram_id, password, **extra_fields)
     
-    
+    def get(self, *args, **kwargs):
+        return super().select_related('phone', 'city').get(*args, **kwargs)
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     telegram_id = models.CharField(max_length=255, unique=True)
     nickname = models.CharField(max_length=255, null=True, blank=True)
