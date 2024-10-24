@@ -12,6 +12,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env.str('SECRET_KEY')
 TECHSUPPORT_BOT_URL = env.str('TECHSUPPORT_BOT_URL')
+VERIFICATOIN_CODE_DIGITS = env.str('VERIFICATOIN_CODE_DIGITS')
 
 DEBUG = env.bool('DEBUG', default=False)
 

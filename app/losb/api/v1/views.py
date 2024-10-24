@@ -15,10 +15,9 @@ from losb.api.v1.serializers import (
     UserCitySerializer,
     UserBdaySerializer,
     UserPhoneSerializer,
-    CitySerializer, BotUrlSerializer,
+    CitySerializer, BotUrlSerializer, UserPhoneVerificationSerializer,
 )
-from losb.models import City
-
+from losb.models import City, User
 
 
 @extend_schema_view(
@@ -106,21 +105,32 @@ class UserBdayAPIView(APIView):
         serializer.update(self.request.user, serializer.validated_data)
         return Response(serializer.data)
 
-@extend_schema_view(
-    update=extend_schema(
+class UserPhoneUpdateView(APIView):
+    permission_classes = [IsAuthenticated,]
+    http_method_names = ["post","put"]
+
+    @extend_schema(
+        request=UserPhoneSerializer,
+        responses={
+            200: {},
+        },
+        summary='Запросить код подтверждения',
+        description='Отправляет otp код на указанный номер телефона',
+    )
+    def post(self):
+        return self.request.user
+
+    @extend_schema(
+        request=UserPhoneVerificationSerializer,
         responses={
             200: UserPhoneSerializer,
+            403: {'detail':'Too many attempts'},
+            409: {'detail':'Invalid'},
         },
-        summary='Изменение телефона пользователя',
-    ),
-)
-class UserPhoneUpdateView(generics.UpdateAPIView):
-    serializer_class = UserBdaySerializer
-    permission_classes = [IsAuthenticated,]
-    http_method_names = ["put"]
-
-    # TODO: change logic
-    def get_object(self):
+        summary='Верифицировать код подтверждения',
+        description='Верифицирует код подтверждения, в случаи успеха обновляет номер телефона пользователя',
+    )
+    def put(self):
         return self.request.user
 
 @extend_schema_view(

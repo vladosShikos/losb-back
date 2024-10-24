@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
 
 from losb.api.v1.views import (
     UserRetrieveView,
@@ -14,12 +13,9 @@ from losb.api.v1.views import (
 
 app_name = 'losb'
 
-router = DefaultRouter()
-# router.register(r'user', UserViewSet, basename='user')
-
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # path('', include(router.urls)),
     path('cities/', CityListView.as_view(), name='cities'),
     path('tech-support', TechSupportAPIView.as_view(), name='tech-support'),
     path('user', UserRetrieveView.as_view(), name='user-detail'),

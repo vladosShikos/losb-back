@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from losb.models import User, City, Phone
+from losb.models import User, City, Phone, VerificationCode
 
 class PhoneSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,8 +37,20 @@ class UserBdaySerializer(serializers.ModelSerializer):
 
 class UserPhoneSerializer(serializers.ModelSerializer):
     class Meta:
-        model = City
-        fields = ('phone',)
+        model = Phone
+        fields = ('code','phone',)
+
+class PhoneVerificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VerificationCode
+        fields = ('code',)
+
+class UserPhoneVerificationSerializer(serializers.ModelSerializer):
+    verification_code = PhoneVerificationSerializer()
+    class Meta:
+        model = Phone
+        fields = ('phone','verification_code')
+
 
 class BotUrlSerializer(serializers.Serializer):
     url = serializers.CharField()
