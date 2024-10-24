@@ -10,7 +10,7 @@ class PhoneSerializer(serializers.ModelSerializer):
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
-        fields = ('id','name',)
+        fields = ('name',)
 
 class UserSerializer(serializers.ModelSerializer):
     city = CitySerializer()
