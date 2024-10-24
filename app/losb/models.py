@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db import models
 
 from app import settings
-from app.settings import VERIFICATOIN_CODE_DIGITS
+from app.settings import SMS_VERIFICATOIN_CODE_DIGITS
 
 
 class City(models.Model):
@@ -14,14 +14,14 @@ class City(models.Model):
     def __str__(self):
         return f'{self.name}'
 
-class VerificationCode(models.Model):
-    code = models.CharField(max_length=int(settings.VERIFICATOIN_CODE_DIGITS))
-    attempts = models.SmallIntegerField(default=0)
-    created_at = models.DateTimeField(null=True)
+class SmsVerification(models.Model):
+    code = models.CharField(max_length=settings.SMS_VERIFICATOIN_CODE_DIGITS)
+    attempts = models.SmallIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class Phone(models.Model):
     code = models.PositiveSmallIntegerField()
-    phone = models.PositiveSmallIntegerField(null=True, blank=True)
+    phone = models.PositiveSmallIntegerField(null=True, blank=True) #TODO: should it be charfield with regex validation?
 
     def __str__(self):
         return f'+{self.code}{self.phone if self.phone else '-not-verified'}'
@@ -57,7 +57,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(telegram_id, password, **extra_fields)
     
     def get(self, *args, **kwargs):
-        return super().select_related('phone', 'city').get(*args, **kwargs)
+        return super().select_related('phone', 'city').get(*args, **kwargs) #TODO: potentially add verification_code
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -67,7 +67,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     avatar = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
     phone = models.ForeignKey(Phone, on_delete=PROTECT,related_name='user')
-    verification_code = models.ForeignKey(VerificationCode, null=True, on_delete=PROTECT,related_name='user')
+    sms_verification = models.ForeignKey(SmsVerification, null=True, on_delete=PROTECT,related_name='user')
     password = models.CharField(max_length=255, blank=True, null=True)
     bday = models.DateField(null=True, default=None) # TODO: check naming Igor used
     city = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)

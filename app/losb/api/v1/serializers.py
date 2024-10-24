@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from losb.models import User, City, Phone, VerificationCode
+from losb.models import User, City, Phone, SmsVerification
 
 class PhoneSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,14 +42,14 @@ class UserPhoneSerializer(serializers.ModelSerializer):
 
 class PhoneVerificationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = VerificationCode
+        model = SmsVerification
         fields = ('code',)
 
 class UserPhoneVerificationSerializer(serializers.ModelSerializer):
-    verification_code = PhoneVerificationSerializer()
+    code = PhoneVerificationSerializer() # TODO: rename to otp
     class Meta:
         model = Phone
-        fields = ('phone','verification_code')
+        fields = ('phone','code')
 
 
 class BotUrlSerializer(serializers.Serializer):

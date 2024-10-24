@@ -1,24 +1,30 @@
 from __future__ import annotations
 
+from random import SystemRandom
+
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema_view, extend_schema
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from losb.schema import TelegramIdJWTSchema
+from losb.schema import TelegramIdJWTSchema # do not remove, needed for swagger
 
 from app import settings
-from losb.api.v1.exceptions import BdayAlreadySet
+from losb.api.v1.exceptions import BirthdayAlreadyRegistered, SmsVerificationResendCooldown, PhoneAlreadyVerified, \
+    SmsVerificationAttemptsExceeded, SmsVerificationNotSend, SmsVerificationExpired, SmsVerificationFailed
 from losb.api.v1.serializers import (
     UserSerializer,
     UserNameSerializer,
     UserCitySerializer,
     UserBdaySerializer,
     UserPhoneSerializer,
-    CitySerializer, BotUrlSerializer, UserPhoneVerificationSerializer,
+    CitySerializer, BotUrlSerializer, UserPhoneVerificationSerializer, PhoneVerificationSerializer,
 )
 from losb.models import City, User
 
+#TODO: Put swagger docs inside classes
+#TODO: request object inside post calls not used, using self instead. Why?
 
 @extend_schema_view(
     get=extend_schema(
@@ -109,7 +115,7 @@ class UserBdayAPIView(APIView):
     )
     def post(self, request):
         if self.request.user.bday:
-            raise BdayAlreadySet
+            raise BirthdayAlreadyRegistered
 
         serializer = UserBdaySerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
@@ -120,29 +126,64 @@ class UserPhoneUpdateView(APIView):
     permission_classes = [IsAuthenticated,]
     http_method_names = ["post","put"]
 
+    @staticmethod
+    def get_otp():
+        return "".join(SystemRandom().choice('123456789') for _ in range(settings.SMS_VERIFICATOIN_CODE_DIGITS))
+
+    # TODO: check swagger docs, you're up to some tinkering
     @extend_schema(
         request=UserPhoneSerializer,
         responses={
-            200: {},
+            200: Response(status=status.HTTP_200_OK),
+            403: SmsVerificationResendCooldown,
+            409: PhoneAlreadyVerified,
         },
         summary='Запросить код подтверждения',
         description='Отправляет otp код на указанный номер телефона',
     )
-    def post(self):
-        return self.request.user
+    def post(self, request):
+        if self.request.user.phone == self.request.phone:
+            raise PhoneAlreadyVerified
+        if self.request.user.sms_verification:
+            if  timezone.now() - self.request.user.sms_verification.code.created_at < settings.SMS_VERIFICATION_RESEND_COOLDOWN: # not sure about tz
+                raise SmsVerificationResendCooldown
+
+        code = self.get_otp()
+        serializer = PhoneVerificationSerializer(data=code)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # send verification code, handle api errors
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK) # remove data
 
     @extend_schema(
         request=UserPhoneVerificationSerializer,
         responses={
             200: UserPhoneSerializer,
-            403: {'detail':'Too many attempts'},
-            409: {'detail':'Invalid'},
+            403: PhoneAlreadyVerified | SmsVerificationExpired | SmsVerificationAttemptsExceeded | SmsVerificationFailed,
+            409: SmsVerificationNotSend,
         },
         summary='Верифицировать код подтверждения',
         description='Верифицирует код подтверждения, в случаи успеха обновляет номер телефона пользователя',
     )
-    def put(self):
-        return self.request.user
+    def put(self, request):
+        if self.request.user.phone == self.request.phone:
+            raise PhoneAlreadyVerified # TODO: should never trigger, remove later
+        if not self.request.user.sms_verification:
+            raise SmsVerificationNotSend
+        if timezone.now() - self.request.user.sms_verification.code.created_at > settings.SMS_VERIFICATION_RESEND_COOLDOWN:  # not sure about tz
+            raise SmsVerificationExpired
+        if self.request.user.sms_verification.code.attempts > settings.SMS_VERIFICATION_ATTEMPTS:
+            raise SmsVerificationAttemptsExceeded
+
+        if self.request.code != self.request.user.sms_verification.code:
+            # increment attempts
+            raise SmsVerificationFailed
+        serializer = UserPhoneSerializer(data=self.request.data['phone'])
+        serializer.is_valid(raise_exception=True)
+        serializer.update(self.request.user, serializer.validated_data)
+        return Response(serializer.data)
 
 @extend_schema_view(
     get=extend_schema(
