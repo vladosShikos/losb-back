@@ -36,10 +36,12 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',
     'drf_standardized_errors',
     'django_extensions',
+    'debug_toolbar',
     *PROJECT_APPS
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -107,7 +109,8 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_standardized_errors.openapi.AutoSchema',
     'EXCEPTION_HANDLER': 'drf_standardized_errors.handler.exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'losb.api.v1.services.auth.ExampleAuthentication', #TODO: rename
+        'losb.api.v1.services.auth.ExampleAuthentication',#TODO: rename
+        'rest_framework.authentication.SessionAuthentication'
     ],
     # 'DEFAULT_PERMISSION_CLASSES':[
     #     'rest_framework.permissions.AllowAny'
@@ -116,6 +119,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 DRF_STANDARDIZED_ERRORS = {'ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS': True}
+INTERNAL_IPS = ['127.0.0.1',]
 
 # SIMPLE_JWT = {
 #     # 'ACCESS_TOKEN_LIFETIME': timedelta(days=30),

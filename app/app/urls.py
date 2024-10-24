@@ -11,6 +11,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from rest_framework.versioning import URLPathVersioning
+from app import settings
 
 app_urls = [
     path('', include('losb.api.urls')),
@@ -37,3 +38,9 @@ urlpatterns = [
     path('', include(api_urls)),
     path('admin/', admin.site.urls),
 ]
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns += [
+        path(r'^__debug__/', include(debug_toolbar.urls)),
+    ]
