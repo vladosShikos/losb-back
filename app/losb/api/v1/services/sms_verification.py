@@ -24,6 +24,8 @@ class SmsVerificationService:
         #
         # Generate and save OTP
         otp = self.generate_otp()
+        # TODO: Implement SMS sending logic here
+
         self._save_verification(otp)
 
         return otp

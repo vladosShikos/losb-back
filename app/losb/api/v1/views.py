@@ -27,9 +27,6 @@ from losb.models import City
 from losb.schema import TelegramIdJWTSchema  # do not remove, needed for swagger
 
 
-
-# TODO: request object inside post calls not used, using self instead. Why?
-
 @extend_schema_view(
     get=extend_schema(
         responses={
@@ -138,7 +135,6 @@ class UserPhoneUpdateView(APIView):
     def get_otp():
         return "".join(SystemRandom().choice('123456789') for _ in range(settings.SMS_VERIFICATOIN_CODE_DIGITS))
 
-    # TODO: check swagger docs, you're up to some tinkering
     @extend_schema(
         request=UserPhoneSerializer,
         responses={
@@ -148,7 +144,6 @@ class UserPhoneUpdateView(APIView):
         description='Отправляет otp код на указанный номер телефона',
     )
     def post(self, request):
-        # TODO: add validation at the beginning of each request
         serializer = UserPhoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -158,10 +153,8 @@ class UserPhoneUpdateView(APIView):
             number=serializer.data['number'],
         )
 
-        # TODO: Implement SMS sending logic here
-
-        return Response(data={"otp": verification_code}, status=status.HTTP_200_OK) # TODO: remove otp from response, for debug only
-
+        # TODO: remove otp from response, for debug only
+        return Response(data={"otp": verification_code},status=status.HTTP_200_OK)
 
     @extend_schema(
         request=UserPhoneVerificationSerializer,
