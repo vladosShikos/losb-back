@@ -14,7 +14,7 @@ from losb.api.v1.serializers import (
     UserSerializer,
     UserNameSerializer,
     UserCitySerializer,
-    UserBdaySerializer,
+    UserBirthdaySerializer,
     UserPhoneSerializer,
     CitySerializer,
     UserPhoneVerificationSerializer,
@@ -108,23 +108,23 @@ class UserCityUpdateView(generics.UpdateAPIView):
         return Response(response_serializer.data)
 
 
-class UserBdayAPIView(APIView):
+class UserBirthdayAPIView(APIView):
     http_method_names = ['post']
     permission_classes = [IsAuthenticated, ]
 
     @extend_schema(
-        request=UserBdaySerializer,
+        request=UserBirthdaySerializer,
         responses={
-            200: UserBdaySerializer,
+            200: UserBirthdaySerializer,
         },
         summary='Установить дату рождения пользователя',
         description='Устанавливает дату рождения пользователя, если она ещё не была изменена',
     )
     def post(self, request):
-        if self.request.user.bday:
+        if self.request.user.birthday:
             raise exceptions.BirthdayAlreadyRegistered
 
-        serializer = UserBdaySerializer(data=self.request.data)
+        serializer = UserBirthdaySerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         serializer.update(self.request.user, serializer.validated_data)
         return Response(serializer.data)

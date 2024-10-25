@@ -20,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('telegram_id', 'avatar', 'name', 'phone', 'city', 'bday')
+        fields = ('telegram_id', 'avatar', 'name', 'phone', 'city', 'birthday')
 
 
 class UserNameSerializer(serializers.ModelSerializer):
@@ -35,10 +35,10 @@ class UserCitySerializer(serializers.ModelSerializer):
         fields = ('city',)
 
 
-class UserBdaySerializer(serializers.ModelSerializer):
+class UserBirthdaySerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('bday',)
+        fields = ('birthday',)
 
 
 class UserPhoneSerializer(serializers.ModelSerializer):

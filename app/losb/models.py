@@ -63,15 +63,17 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     telegram_id = models.CharField(max_length=255, unique=True)
     nickname = models.CharField(max_length=255, null=True, blank=True)
-    username = models.CharField(max_length=255, blank=True, null=True)
-    name = models.CharField(max_length=255)
-    avatar = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
-    phone = models.ForeignKey(Phone, on_delete=CASCADE,related_name='user')
-    sms_verification = models.ForeignKey(SMSVerification, null=True, on_delete=SET_NULL,related_name='user')
-    password = models.CharField(max_length=255, blank=True, null=True)
-    bday = models.DateField(null=True, default=None) # TODO: check naming Igor used
-    city = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=255)
+    phone = models.ForeignKey(Phone, on_delete=CASCADE,related_name='user')
+
+    sms_verification = models.ForeignKey(SMSVerification, null=True, blank=True, on_delete=SET_NULL,related_name='user')
+    avatar_url = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
+    birthday = models.DateField(null=True, default=None)
+    location = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)
+
+    username = models.CharField(max_length=255, blank=True, null=True)
+    password = models.CharField(max_length=255, blank=True, null=True)
     last_login = None
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
