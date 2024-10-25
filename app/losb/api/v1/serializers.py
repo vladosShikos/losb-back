@@ -6,7 +6,7 @@ from losb.models import User, City, Phone, SMSVerification
 class PhoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Phone
-        fields = ('code','numnrt')
+        fields = ('code','number')
 
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -51,7 +51,7 @@ class UserPhoneVerificationSerializer(serializers.ModelSerializer):
     phone = PhoneSerializer()
     class Meta:
         model = SMSVerification
-        fields = ('code','phone') # TODO: rename to otp
+        fields = ('otp','phone')
 
 
 class BotUrlSerializer(serializers.Serializer):

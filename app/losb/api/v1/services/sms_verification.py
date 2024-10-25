@@ -16,33 +16,30 @@ class SmsVerificationService:
 
     def request_verification(self, code, number):
         # Check if phone is already verified
-        if (self.user.phone.code == code and self.user.phone.number == number):
+        if self.user.phone.code == code and self.user.phone.number == number:
             raise exceptions.PhoneAlreadyVerified()
 
         # Check cooldown period
         self._check_cooldown()
-
+        #
         # Generate and save OTP
         otp = self.generate_otp()
         self._save_verification(otp)
 
         return otp
 
-    def verify_code(self, phone, code):
+    def verify_code(self, otp, code, number):
         if not self.user.sms_verification:
             raise exceptions.SmsVerificationNotSend()
-
-        if self.user.number == phone:
-            raise exceptions.PhoneAlreadyVerified()
 
         self._check_verification_expiry()
         self._check_verification_attempts()
 
-        if self.user.sms_verification.otp != code:
+        if self.user.sms_verification.otp != otp:
             self._increment_attempts()
             raise exceptions.SmsVerificationFailed()
 
-        return self._update_phone(phone)
+        return self._update_phone({"code": code, "number": number})
 
     def _check_cooldown(self):
         if self.user.sms_verification:

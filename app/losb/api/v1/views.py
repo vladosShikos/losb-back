@@ -161,7 +161,7 @@ class UserPhoneUpdateView(APIView):
 
         # TODO: Implement SMS sending logic here
 
-        return Response(data={"code": verification_code}, status=status.HTTP_200_OK)
+        return Response(data={"otp": verification_code}, status=status.HTTP_200_OK) # TODO: remove otp from response, for debug only
 
 
     @extend_schema(
@@ -180,8 +180,9 @@ class UserPhoneUpdateView(APIView):
 
         service = SmsVerificationService(request.user)
         result = service.verify_code(
-            phone=serializer.data['phone'],
-            code=serializer.data['code']
+            otp=serializer.data['otp'],
+            code=serializer.data['phone']['code'],
+            number=serializer.data['phone']['number'],
         )
 
         return Response(result)

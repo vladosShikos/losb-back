@@ -19,7 +19,7 @@ class SmsVerificationResendCooldown(APIException):
 # PUT phone
 class SmsVerificationNotSend(APIException):
     status_code = 409
-    default_detail = 'Sms verification was never send.'
+    default_detail = 'Sms verification was not issued.'
 
 class SmsVerificationExpired(APIException):
     status_code = 403
