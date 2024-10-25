@@ -147,11 +147,17 @@ class UserPhoneUpdateView(APIView):
         serializer = UserPhoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        service = SmsVerificationService(request.user)
-        verification_code = service.request_verification(
-            code=serializer.data['code'],
-            number=serializer.data['number'],
-        )
+        try:
+            service = SmsVerificationService(request.user)
+            verification_code = service.request_verification(
+                code=serializer.data['code'],
+                number=serializer.data['number'],
+            )
+        except exceptions.SmsDeliveryError as e:
+            raise APIException(
+                detail=str(e),
+                code='sms_delivery_failed'
+            )
 
         # TODO: remove otp from response, for debug only
         return Response(data={"otp": verification_code},status=status.HTTP_200_OK)

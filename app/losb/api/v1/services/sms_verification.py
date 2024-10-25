@@ -4,11 +4,13 @@ from django.utils import timezone
 from app import settings
 from losb.api.v1 import exceptions
 from losb.api.v1.serializers import PhoneSerializer, SMSVerificationSerializer
+from losb.api.v1.services.sms_sender import SmsRuService
 
 
 class SmsVerificationService:
     def __init__(self, user):
         self.user = user
+        self.sms_service = SmsRuService()
 
     @staticmethod
     def generate_otp():
@@ -24,7 +26,15 @@ class SmsVerificationService:
         #
         # Generate and save OTP
         otp = self.generate_otp()
-        # TODO: Implement SMS sending logic here
+
+        try:
+            message = self._get_verification_message(otp)
+            phone = code+number
+            self.sms_service.send_sms(phone, message)
+        except exceptions.SmsDeliveryError as e:
+            # You might want to delete the verification code if SMS fails
+            self.user.sms_verification.delete()
+            raise
 
         self._save_verification(otp)
 
@@ -83,3 +93,7 @@ class SmsVerificationService:
         self.user.sms_verification.delete()
 
         return serializer.data
+
+    @staticmethod
+    def _get_verification_message(code: str) -> str:
+        return f"Код подтверждения: {code}"
