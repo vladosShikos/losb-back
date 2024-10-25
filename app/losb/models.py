@@ -14,17 +14,17 @@ class City(models.Model):
     def __str__(self):
         return f'{self.name}'
 
-class SmsVerification(models.Model):
-    code = models.CharField(max_length=settings.SMS_VERIFICATOIN_CODE_DIGITS)
+class SMSVerification(models.Model):
+    otp = models.CharField(max_length=settings.SMS_VERIFICATOIN_CODE_DIGITS)
     attempts = models.SmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Phone(models.Model):
     code = models.CharField()
-    phone = models.CharField(null=True, blank=True) #TODO: should regex validation be added?
+    number = models.CharField(null=True, blank=True) #TODO: should regex validation be added?
 
     def __str__(self):
-        return f'+{self.code}{self.phone if self.phone else '-not-verified'}'
+        return f'+{self.code}{self.number if self.number else '-not-verified'}'
 
 class CustomUserManager(BaseUserManager):
     """
@@ -67,7 +67,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     avatar = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
     phone = models.ForeignKey(Phone, on_delete=CASCADE,related_name='user')
-    sms_verification = models.ForeignKey(SmsVerification, null=True, on_delete=SET_NULL,related_name='user')
+    sms_verification = models.ForeignKey(SMSVerification, null=True, on_delete=SET_NULL,related_name='user')
     password = models.CharField(max_length=255, blank=True, null=True)
     bday = models.DateField(null=True, default=None) # TODO: check naming Igor used
     city = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)

@@ -8,6 +8,8 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from losb.api.v1.services.sms_verification import SmsVerificationService
 from losb.schema import TelegramIdJWTSchema  # do not remove, needed for swagger
 
 from app import settings
@@ -19,8 +21,7 @@ from losb.api.v1.serializers import (
     UserCitySerializer,
     UserBdaySerializer,
     UserPhoneSerializer,
-    CitySerializer, BotUrlSerializer, UserPhoneVerificationSerializer, PhoneVerificationSerializer, PhoneSerializer,
-    UseRPhoneSerializer,
+    CitySerializer, BotUrlSerializer, UserPhoneVerificationSerializer, SMSVerificationSerializer, PhoneSerializer,
 )
 from losb.models import City, User
 
@@ -149,28 +150,19 @@ class UserPhoneUpdateView(APIView):
     )
     def post(self, request):
         # TODO: add validation at the beginning of each request
-        serializer = UserPhoneSerializer(data=self.request.data)
+        serializer = UserPhoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if (self.request.user.phone.code == serializer.data['code'] and
-            self.request.user.phone.phone == serializer.data['phone']):
-            raise PhoneAlreadyVerified
-        if self.request.user.sms_verification:
-            td = timezone.now() - self.request.user.sms_verification.created_at
-            if td.seconds < settings.SMS_VERIFICATION_RESEND_COOLDOWN:  # not sure about tz
-                raise SmsVerificationResendCooldown(
-                    detail=f'You must wait for {settings.SMS_VERIFICATION_RESEND_COOLDOWN - td.seconds} seconds'
-                           f' before requesting a new SMS verification code.')
+        service = SmsVerificationService(request.user)
+        verification_code = service.request_verification(
+            code=serializer.data['code'],
+            number=serializer.data['number'],
+        )
 
-        code = self.get_otp()
-        response_serializer = PhoneVerificationSerializer(data={'code': code})
-        response_serializer.is_valid(raise_exception=True)
-        self.request.user.sms_verification = response_serializer.save()
-        self.request.user.save()
+        # TODO: Implement SMS sending logic here
 
-        # send verification code, handle api errors
+        return Response(data={"code": verification_code}, status=status.HTTP_200_OK)
 
-        return Response(data={"code":code}, status=status.HTTP_200_OK)
 
     @extend_schema(
         request=UserPhoneVerificationSerializer,
@@ -183,33 +175,16 @@ class UserPhoneUpdateView(APIView):
         description='Верифицирует код подтверждения, в случаи успеха обновляет номер телефона пользователя',
     )
     def put(self, request):
-        if not self.request.user.sms_verification:
-            raise SmsVerificationNotSend
-
-        serializer = UserPhoneVerificationSerializer(data=self.request.data)
+        serializer = UserPhoneVerificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if self.request.user.phone == serializer.data['phone']:
-            raise PhoneAlreadyVerified  # TODO: should never trigger, remove later
-        td = timezone.now() - self.request.user.sms_verification.created_at
-        if td.seconds > settings.SMS_VERIFICATION_RESEND_COOLDOWN:
-            self.request.user.sms_verification.delete()
-            raise SmsVerificationExpired
-        if self.request.user.sms_verification.attempts > settings.SMS_VERIFICATION_ATTEMPTS:
-            self.request.user.sms_verification.delete()
-            raise SmsVerificationAttemptsExceeded
+        service = SmsVerificationService(request.user)
+        result = service.verify_code(
+            phone=serializer.data['phone'],
+            code=serializer.data['code']
+        )
 
-        if self.request.user.sms_verification.code != serializer.data['code']:
-            self.request.user.sms_verification.attempts += 1
-            self.request.user.sms_verification.save()
-            raise SmsVerificationFailed
-        response_serializer = PhoneSerializer(data=serializer.data['phone'])
-        response_serializer.is_valid(raise_exception=True)
-        # make it a transaction
-        self.request.user.phone = response_serializer.save()
-        self.request.user.save()
-        self.request.user.sms_verification.delete()
-        return Response(response_serializer.data)
+        return Response(result)
 
 
 @extend_schema_view(

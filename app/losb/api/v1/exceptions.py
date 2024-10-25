@@ -10,7 +10,7 @@ class BirthdayAlreadyRegistered(APIException):
 # TODO: make exception details less explicit for security sake (leaks a lot of info rn)
 class PhoneAlreadyVerified(APIException):
     status_code = 409
-    default_detail = ''
+    default_detail = 'Trying to verify already registered phone number.'
 
 class SmsVerificationResendCooldown(APIException):
     status_code = 403
