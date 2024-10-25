@@ -1,6 +1,6 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
-from django.db.models import CASCADE, PROTECT
+from django.db.models import CASCADE, PROTECT, SET_NULL
 from django.utils.translation import gettext_lazy as _
 from django.db import models
 
@@ -16,12 +16,12 @@ class City(models.Model):
 
 class SmsVerification(models.Model):
     code = models.CharField(max_length=settings.SMS_VERIFICATOIN_CODE_DIGITS)
-    attempts = models.SmallIntegerField(default=1)
+    attempts = models.SmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Phone(models.Model):
     code = models.PositiveSmallIntegerField()
-    phone = models.PositiveSmallIntegerField(null=True, blank=True) #TODO: should it be charfield with regex validation?
+    phone = models.PositiveSmallIntegerField(null=True, blank=True) #TODO: should it be charfield with regex validation? rename to number
 
     def __str__(self):
         return f'+{self.code}{self.phone if self.phone else '-not-verified'}'
@@ -66,8 +66,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=255, blank=True, null=True)
     name = models.CharField(max_length=255)
     avatar = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
-    phone = models.ForeignKey(Phone, on_delete=PROTECT,related_name='user')
-    sms_verification = models.ForeignKey(SmsVerification, null=True, on_delete=PROTECT,related_name='user')
+    phone = models.ForeignKey(Phone, on_delete=CASCADE,related_name='user')
+    sms_verification = models.ForeignKey(SmsVerification, null=True, on_delete=SET_NULL,related_name='user')
     password = models.CharField(max_length=255, blank=True, null=True)
     bday = models.DateField(null=True, default=None) # TODO: check naming Igor used
     city = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)

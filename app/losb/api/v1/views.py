@@ -8,7 +8,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from losb.schema import TelegramIdJWTSchema # do not remove, needed for swagger
+from losb.schema import TelegramIdJWTSchema  # do not remove, needed for swagger
 
 from app import settings
 from losb.api.v1.exceptions import BirthdayAlreadyRegistered, SmsVerificationResendCooldown, PhoneAlreadyVerified, \
@@ -19,12 +19,14 @@ from losb.api.v1.serializers import (
     UserCitySerializer,
     UserBdaySerializer,
     UserPhoneSerializer,
-    CitySerializer, BotUrlSerializer, UserPhoneVerificationSerializer, PhoneVerificationSerializer,
+    CitySerializer, BotUrlSerializer, UserPhoneVerificationSerializer, PhoneVerificationSerializer, PhoneSerializer,
+    UseRPhoneSerializer,
 )
 from losb.models import City, User
 
-#TODO: Put swagger docs inside classes
-#TODO: request object inside post calls not used, using self instead. Why?
+
+# TODO: Put swagger docs inside classes
+# TODO: request object inside post calls not used, using self instead. Why?
 
 @extend_schema_view(
     get=extend_schema(
@@ -37,9 +39,10 @@ from losb.models import City, User
 )
 class CityListView(generics.ListAPIView):
     serializer_class = CitySerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated, ]
     pagination_class = None
     queryset = City.objects.all()
+
 
 @extend_schema_view(
     get=extend_schema(
@@ -52,10 +55,11 @@ class CityListView(generics.ListAPIView):
 )
 class UserRetrieveView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated, ]
 
     def get_object(self):
         return self.request.user
+
 
 @extend_schema_view(
     update=extend_schema(
@@ -67,11 +71,12 @@ class UserRetrieveView(generics.RetrieveAPIView):
 )
 class UserNameUpdateView(generics.UpdateAPIView):
     serializer_class = UserNameSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated, ]
     http_method_names = ["put"]
 
     def get_object(self):
         return self.request.user
+
 
 @extend_schema_view(
     update=extend_schema(
@@ -83,9 +88,8 @@ class UserNameUpdateView(generics.UpdateAPIView):
 )
 class UserCityUpdateView(generics.UpdateAPIView):
     serializer_class = UserCitySerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated, ]
     http_method_names = ["put"]
-
 
     def get_object(self):
         return self.request.user
@@ -100,6 +104,7 @@ class UserCityUpdateView(generics.UpdateAPIView):
         response_serializer = CitySerializer(city)
 
         return Response(response_serializer.data)
+
 
 class UserBdayAPIView(APIView):
     http_method_names = ['post']
@@ -122,9 +127,10 @@ class UserBdayAPIView(APIView):
         serializer.update(self.request.user, serializer.validated_data)
         return Response(serializer.data)
 
+
 class UserPhoneUpdateView(APIView):
-    permission_classes = [IsAuthenticated,]
-    http_method_names = ["post","put"]
+    permission_classes = [IsAuthenticated, ]
+    http_method_names = ["post", "put"]
 
     @staticmethod
     def get_otp():
@@ -142,20 +148,29 @@ class UserPhoneUpdateView(APIView):
         description='Отправляет otp код на указанный номер телефона',
     )
     def post(self, request):
-        if self.request.user.phone == self.request.phone:
+        # TODO: add validation at the beginning of each request
+        serializer = UserPhoneSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if (self.request.user.phone.code == serializer.data['code'] and
+            self.request.user.phone.phone == serializer.data['phone']):
             raise PhoneAlreadyVerified
         if self.request.user.sms_verification:
-            if  timezone.now() - self.request.user.sms_verification.code.created_at < settings.SMS_VERIFICATION_RESEND_COOLDOWN: # not sure about tz
-                raise SmsVerificationResendCooldown
+            td = timezone.now() - self.request.user.sms_verification.created_at
+            if td.seconds < settings.SMS_VERIFICATION_RESEND_COOLDOWN:  # not sure about tz
+                raise SmsVerificationResendCooldown(
+                    detail=f'You must wait for {settings.SMS_VERIFICATION_RESEND_COOLDOWN - td.seconds} seconds'
+                           f' before requesting a new SMS verification code.')
 
         code = self.get_otp()
-        serializer = PhoneVerificationSerializer(data=code)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        response_serializer = PhoneVerificationSerializer(data={'code': code})
+        response_serializer.is_valid(raise_exception=True)
+        self.request.user.sms_verification = response_serializer.save()
+        self.request.user.save()
 
         # send verification code, handle api errors
 
-        return Response(data=serializer.data, status=status.HTTP_200_OK) # remove data
+        return Response(data={"code":code}, status=status.HTTP_200_OK)
 
     @extend_schema(
         request=UserPhoneVerificationSerializer,
@@ -168,22 +183,34 @@ class UserPhoneUpdateView(APIView):
         description='Верифицирует код подтверждения, в случаи успеха обновляет номер телефона пользователя',
     )
     def put(self, request):
-        if self.request.user.phone == self.request.phone:
-            raise PhoneAlreadyVerified # TODO: should never trigger, remove later
         if not self.request.user.sms_verification:
             raise SmsVerificationNotSend
-        if timezone.now() - self.request.user.sms_verification.code.created_at > settings.SMS_VERIFICATION_RESEND_COOLDOWN:  # not sure about tz
+
+        serializer = UserPhoneVerificationSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if self.request.user.phone == serializer.data['phone']:
+            raise PhoneAlreadyVerified  # TODO: should never trigger, remove later
+        td = timezone.now() - self.request.user.sms_verification.created_at
+        if td.seconds > settings.SMS_VERIFICATION_RESEND_COOLDOWN:
+            self.request.user.sms_verification.delete()
             raise SmsVerificationExpired
-        if self.request.user.sms_verification.code.attempts > settings.SMS_VERIFICATION_ATTEMPTS:
+        if self.request.user.sms_verification.attempts > settings.SMS_VERIFICATION_ATTEMPTS:
+            self.request.user.sms_verification.delete()
             raise SmsVerificationAttemptsExceeded
 
-        if self.request.code != self.request.user.sms_verification.code:
-            # increment attempts
+        if self.request.user.sms_verification.code != serializer.data['code']:
+            self.request.user.sms_verification.attempts += 1
+            self.request.user.sms_verification.save()
             raise SmsVerificationFailed
-        serializer = UserPhoneSerializer(data=self.request.data['phone'])
-        serializer.is_valid(raise_exception=True)
-        serializer.update(self.request.user, serializer.validated_data)
-        return Response(serializer.data)
+        response_serializer = PhoneSerializer(data=serializer.data['phone'])
+        response_serializer.is_valid(raise_exception=True)
+        # make it a transaction
+        self.request.user.phone = response_serializer.save()
+        self.request.user.save()
+        self.request.user.sms_verification.delete()
+        return Response(response_serializer.data)
+
 
 @extend_schema_view(
     get=extend_schema(
@@ -195,7 +222,7 @@ class UserPhoneUpdateView(APIView):
 )
 class TechSupportAPIView(generics.RetrieveAPIView):
     serializer_class = BotUrlSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated, ]
 
     def get_object(self):
-        return {'url':settings.TECHSUPPORT_BOT_URL}
+        return {'url': settings.TECHSUPPORT_BOT_URL}

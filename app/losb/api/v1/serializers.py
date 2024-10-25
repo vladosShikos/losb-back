@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from yaml import serialize_all
 
 from losb.models import User, City, Phone, SmsVerification
 
@@ -36,9 +37,10 @@ class UserBdaySerializer(serializers.ModelSerializer):
         fields = ('bday',)
 
 class UserPhoneSerializer(serializers.ModelSerializer):
+    phone = serializers.IntegerField()
     class Meta:
         model = Phone
-        fields = ('code','phone',)
+        fields = ('code','phone')
 
 class PhoneVerificationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,11 +48,17 @@ class PhoneVerificationSerializer(serializers.ModelSerializer):
         fields = ('code',)
 
 class UserPhoneVerificationSerializer(serializers.ModelSerializer):
-    code = PhoneVerificationSerializer() # TODO: rename to otp
+    phone = PhoneSerializer()
     class Meta:
-        model = Phone
-        fields = ('phone','code')
+        model = SmsVerification
+        fields = ('code','phone') # TODO: rename to otp
 
 
 class BotUrlSerializer(serializers.Serializer):
     url = serializers.CharField()
+
+class UseRPhoneSerializer(serializers.ModelSerializer):
+    phone = serializers.PrimaryKeyRelatedField(queryset=Phone.objects.all())
+    class Meta:
+        model = User
+        fields = ('phone',)
