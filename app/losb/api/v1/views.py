@@ -142,9 +142,7 @@ class UserPhoneUpdateView(APIView):
     @extend_schema(
         request=UserPhoneSerializer,
         responses={
-            200: Response(status=status.HTTP_200_OK),
-            403: exceptions.SmsVerificationResendCooldown,
-            409: exceptions.PhoneAlreadyVerified,
+            200: {},
         },
         summary='Запросить код подтверждения',
         description='Отправляет otp код на указанный номер телефона',
@@ -169,8 +167,6 @@ class UserPhoneUpdateView(APIView):
         request=UserPhoneVerificationSerializer,
         responses={
             200: PhoneSerializer,
-            403: exceptions.PhoneAlreadyVerified | exceptions.SmsVerificationExpired | exceptions.SmsVerificationAttemptsExceeded | exceptions.SmsVerificationFailed,
-            409: exceptions.SmsVerificationNotSend,
         },
         summary='Верифицировать код подтверждения',
         description='Верифицирует код подтверждения, в случаи успеха обновляет номер телефона пользователя',
