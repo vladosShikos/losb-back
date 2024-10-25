@@ -2,31 +2,32 @@ from __future__ import annotations
 
 from random import SystemRandom
 
-from django.utils import timezone
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from losb.api.v1.services.sms_verification import SmsVerificationService
-from losb.schema import TelegramIdJWTSchema  # do not remove, needed for swagger
-
 from app import settings
-from losb.api.v1.exceptions import BirthdayAlreadyRegistered, SmsVerificationResendCooldown, PhoneAlreadyVerified, \
-    SmsVerificationAttemptsExceeded, SmsVerificationNotSend, SmsVerificationExpired, SmsVerificationFailed
+from losb.api.v1 import exceptions
 from losb.api.v1.serializers import (
     UserSerializer,
     UserNameSerializer,
     UserCitySerializer,
     UserBdaySerializer,
     UserPhoneSerializer,
-    CitySerializer, BotUrlSerializer, UserPhoneVerificationSerializer, SMSVerificationSerializer, PhoneSerializer,
+    CitySerializer,
+    UserPhoneVerificationSerializer,
+    PhoneSerializer,
+    BotUrlSerializer,
+
 )
-from losb.models import City, User
+from losb.api.v1.services.sms_verification import SmsVerificationService
+from losb.models import City
+from losb.schema import TelegramIdJWTSchema  # do not remove, needed for swagger
 
 
-# TODO: Put swagger docs inside classes
+
 # TODO: request object inside post calls not used, using self instead. Why?
 
 @extend_schema_view(
@@ -121,7 +122,7 @@ class UserBdayAPIView(APIView):
     )
     def post(self, request):
         if self.request.user.bday:
-            raise BirthdayAlreadyRegistered
+            raise exceptions.BirthdayAlreadyRegistered
 
         serializer = UserBdaySerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
@@ -142,8 +143,8 @@ class UserPhoneUpdateView(APIView):
         request=UserPhoneSerializer,
         responses={
             200: Response(status=status.HTTP_200_OK),
-            403: SmsVerificationResendCooldown,
-            409: PhoneAlreadyVerified,
+            403: exceptions.SmsVerificationResendCooldown,
+            409: exceptions.PhoneAlreadyVerified,
         },
         summary='Запросить код подтверждения',
         description='Отправляет otp код на указанный номер телефона',
@@ -167,9 +168,9 @@ class UserPhoneUpdateView(APIView):
     @extend_schema(
         request=UserPhoneVerificationSerializer,
         responses={
-            200: UserPhoneSerializer,
-            403: PhoneAlreadyVerified | SmsVerificationExpired | SmsVerificationAttemptsExceeded | SmsVerificationFailed,
-            409: SmsVerificationNotSend,
+            200: PhoneSerializer,
+            403: exceptions.PhoneAlreadyVerified | exceptions.SmsVerificationExpired | exceptions.SmsVerificationAttemptsExceeded | exceptions.SmsVerificationFailed,
+            409: exceptions.SmsVerificationNotSend,
         },
         summary='Верифицировать код подтверждения',
         description='Верифицирует код подтверждения, в случаи успеха обновляет номер телефона пользователя',
