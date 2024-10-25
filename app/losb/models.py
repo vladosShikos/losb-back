@@ -20,8 +20,8 @@ class SmsVerification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Phone(models.Model):
-    code = models.PositiveSmallIntegerField()
-    phone = models.PositiveSmallIntegerField(null=True, blank=True) #TODO: should it be charfield with regex validation? rename to number
+    code = models.CharField()
+    phone = models.CharField(null=True, blank=True) #TODO: should regex validation be added?
 
     def __str__(self):
         return f'+{self.code}{self.phone if self.phone else '-not-verified'}'
