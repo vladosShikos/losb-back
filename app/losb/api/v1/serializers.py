@@ -11,7 +11,7 @@ class PhoneSerializer(serializers.ModelSerializer):
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
-        fields = ('name',)
+        fields = ('id', 'name')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,19 +20,19 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('telegram_id', 'avatar_url', 'name', 'phone', 'location', 'birthday')
+        fields = ('telegram_id', 'avatar_url', 'full_name', 'phone', 'location', 'birthday')
 
 
 class UserNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('name',)
+        fields = ('full_name',)
 
 
 class UserCitySerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('location',)
+        fields = ('id', 'location')
 
 
 class UserBirthdaySerializer(serializers.ModelSerializer):

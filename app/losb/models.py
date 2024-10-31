@@ -3,6 +3,7 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db.models import CASCADE, PROTECT, SET_NULL
 from django.utils.translation import gettext_lazy as _
 from django.db import models
+from losb.api.v1.services.telegram_user_data import get_telegram_user_data
 
 from app import settings
 from app.settings import SMS_VERIFICATOIN_CODE_DIGITS
@@ -14,10 +15,12 @@ class City(models.Model):
     def __str__(self):
         return f'{self.name}'
 
+
 class SMSVerification(models.Model):
     otp = models.CharField(max_length=settings.SMS_VERIFICATOIN_CODE_DIGITS)
     attempts = models.SmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
 class Phone(models.Model):
     code = models.CharField()
@@ -25,6 +28,7 @@ class Phone(models.Model):
 
     def __str__(self):
         return f'+{self.code}{self.number if self.number else '-not-verified'}'
+
 
 class CustomUserManager(BaseUserManager):
     """
@@ -37,8 +41,17 @@ class CustomUserManager(BaseUserManager):
         """
         if not telegram_id:
             raise ValueError(_("The telegram_id must be set"))
+
+        bot_token = settings.TELEGRAM_BOT_TOKEN
+        user_data = get_telegram_user_data(telegram_id, bot_token)
+
+        first_name = user_data.get("first_name", "")
+        last_name = user_data.get("last_name", "")
+        username = user_data.get("username", "")
+        full_name = f"{last_name} {first_name}".strip()
+
         phone = Phone.objects.create(code=7)
-        user = self.model(telegram_id=telegram_id, phone=phone, **extra_fields)
+        user = self.model(telegram_id=telegram_id, phone=phone, full_name=full_name, nickname=username, **extra_fields)
         user.set_password(password)
         user.save()
         return user
@@ -64,10 +77,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     telegram_id = models.CharField(max_length=255, unique=True)
     nickname = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=255)
-    phone = models.ForeignKey(Phone, on_delete=CASCADE,related_name='user')
+    full_name = models.CharField(max_length=255)
+    phone = models.ForeignKey(Phone, on_delete=CASCADE, related_name='user')
 
-    sms_verification = models.ForeignKey(SMSVerification, null=True, blank=True, on_delete=SET_NULL,related_name='user')
+    sms_verification = models.ForeignKey(SMSVerification, null=True, blank=True, on_delete=SET_NULL, related_name='user')
     avatar_url = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
     birthday = models.DateField(null=True, default=None)
     location = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)

@@ -8,8 +8,10 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from app.settings import SECRET_KEY
 
+
 class TokenError(Exception):
     pass
+
 
 class InvalidTokenError(Exception):
     pass

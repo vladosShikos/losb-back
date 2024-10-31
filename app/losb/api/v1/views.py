@@ -4,6 +4,7 @@ from random import SystemRandom
 
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import generics, status
+from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -160,7 +161,7 @@ class UserPhoneUpdateView(APIView):
             )
 
         # TODO: remove otp from response, for debug only
-        return Response(data={"otp": verification_code},status=status.HTTP_200_OK)
+        return Response(data={"otp": verification_code}, status=status.HTTP_200_OK)
 
     @extend_schema(
         request=UserPhoneVerificationSerializer,
