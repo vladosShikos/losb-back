@@ -1,0 +1,30 @@
+name: Update infra repo
+
+on:
+  create:
+    # Pattern matched against refs/tags
+    tags:
+      - "*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Update infra repo
+    steps:
+      - name: "Update version in the infra repo"
+        if: github.ref_type == 'tag'
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: hqcamp
+          repo: hardqode_edtech_infra
+          github_token: ${{ secrets.ACTIONS_TOKEN }}
+          github_user: KrasnovVitaliy
+          workflow_file_name: build_image.yml
+          ref: main
+          wait_interval: 10
+          client_payload: '{"version": "${{  github.ref_name }}","repo_name": "${{ vars.REPO_NAME }}","version_str": "${{ vars.VERSION_NAME }}","group_name": "${{ vars.GROUP_NAME }}"}'
+          propagate_failure: false
+          trigger_workflow: true
+          wait_workflow: true
+
+

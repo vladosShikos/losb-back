@@ -57,7 +57,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(telegram_id, password, **extra_fields)
     
     def get(self, *args, **kwargs):
-        return super().select_related('phone', 'city').get(*args, **kwargs) #TODO: potentially add verification_code
+        return super().select_related('phone', 'location').get(*args, **kwargs) #TODO: potentially add verification_code
 
 
 class User(AbstractBaseUser, PermissionsMixin):
