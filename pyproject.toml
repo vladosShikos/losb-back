@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "losb-back"
-version = "0.1.0"
+version = "0.0.1"
 description = ""
 authors = ["vlados_shikos <vladsyturinn@gmail.com>"]
 readme = "README.md"

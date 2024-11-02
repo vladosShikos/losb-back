@@ -22,7 +22,7 @@ SMS_RU_API_KEY = env.str('SMS_RU_API_KEY')
 
 DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
