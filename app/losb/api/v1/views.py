@@ -5,6 +5,7 @@ from random import SystemRandom
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import generics, status
 from rest_framework.exceptions import APIException
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,6 +13,7 @@ from rest_framework.views import APIView
 from app import settings
 from losb.api.v1 import exceptions
 from losb.api.v1.serializers import (
+    UserAvatarSerializer,
     UserSerializer,
     UserNameSerializer,
     UserCitySerializer,
@@ -21,9 +23,9 @@ from losb.api.v1.serializers import (
     UserPhoneVerificationSerializer,
     PhoneSerializer,
     BotUrlSerializer,
-
 )
 from losb.api.v1.services.sms_verification import SmsVerificationService
+from losb.api.v1.services.last_message_service import LastMessageService
 from losb.models import City
 from losb.schema import TelegramIdJWTSchema  # do not remove, needed for swagger
 
@@ -72,14 +74,21 @@ class UserRetrieveView(generics.RetrieveAPIView):
 class UserNameUpdateView(generics.UpdateAPIView):
     serializer_class = UserNameSerializer
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ["put"]
+    http_method_names = ["patch"]
 
     def get_object(self):
         return self.request.user
 
+    def patch(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
 
 @extend_schema_view(
-    update=extend_schema(
+    patch=extend_schema(
         responses={
             200: UserCitySerializer,
         },
@@ -89,18 +98,18 @@ class UserNameUpdateView(generics.UpdateAPIView):
 class UserCityUpdateView(generics.UpdateAPIView):
     serializer_class = UserCitySerializer
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ["put"]
+    http_method_names = ["patch"]
 
     def get_object(self):
         return self.request.user
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        city = City.objects.get(id=serializer.data['city'])
+
+        city = City.objects.get(id=serializer.validated_data['location'].id)
         response_serializer = CitySerializer(city)
 
         return Response(response_serializer.data)
@@ -199,3 +208,68 @@ class TechSupportAPIView(generics.RetrieveAPIView):
 
     def get_object(self):
         return {'url': settings.TECHSUPPORT_BOT_URL}
+
+
+@extend_schema_view(
+    patch=extend_schema(
+        request=UserAvatarSerializer,
+        responses={
+            200: UserAvatarSerializer,
+        },
+        summary='Загрузить аватар пользователя',
+        description='Загружает новый аватар в профиль пользователя',
+    ),
+)
+class UserAvatarUpdateView(generics.UpdateAPIView):
+    serializer_class = UserAvatarSerializer
+    permission_classes = [IsAuthenticated, ]
+    parser_classes = (MultiPartParser, FormParser)
+    http_method_names = ['patch']
+
+    def get_object(self):
+        return self.request.user
+
+    def patch(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        user.avatar_url = serializer.validated_data['avatar_url']
+        user.save()
+
+        return Response(serializer.data)
+
+
+@extend_schema_view(
+    get=extend_schema(
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'avatar_url': {'type': 'string'},
+                    'message': {'type': 'string'},
+                    'time': {'type': 'string'},
+                },
+            },
+        },
+        summary='Получить последнее сообщение, аватар пользователя и время сообщения',
+    ),
+)
+class LastMessageAPIView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, ]
+    http_method_names = ['get']
+
+    def get(self, request):
+        service = LastMessageService(request.user.telegram_id)
+
+        last_message_info, error = service.get_last_message()
+        avatar_url = service.get_avatar_url()
+
+        if error:
+            return Response({'error': error}, status=400)
+
+        return Response({
+            'avatar_url': avatar_url,
+            'message': last_message_info['message'] if last_message_info else None,
+            'time': last_message_info['time'] if last_message_info else None,
+        })

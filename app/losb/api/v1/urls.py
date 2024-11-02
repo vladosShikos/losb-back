@@ -5,10 +5,11 @@ from django.urls import path, include
 from losb.api.v1.views import (
     UserRetrieveView,
     UserNameUpdateView,
+    UserAvatarUpdateView,
     UserCityUpdateView,
     UserBirthdayAPIView,
     UserPhoneUpdateView,
-    CityListView, TechSupportAPIView,
+    CityListView, TechSupportAPIView, LastMessageAPIView
 )
 
 app_name = 'losb'
@@ -23,4 +24,6 @@ urlpatterns = [
     path('user/city', UserCityUpdateView.as_view(), name='user-city'),
     path('user/birthday', UserBirthdayAPIView.as_view(), name='user-birthday'),
     path('user/phone', UserPhoneUpdateView.as_view(), name='user-phone'),
+    path('user/avatar', UserAvatarUpdateView.as_view(), name='user-avatar-upload'),
+    path('user/last-message', LastMessageAPIView.as_view(), name='last-message'),
 ]

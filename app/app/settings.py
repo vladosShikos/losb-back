@@ -12,6 +12,7 @@ environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
 
 SECRET_KEY = env.str('SECRET_KEY')
 TECHSUPPORT_BOT_URL = env.str('TECHSUPPORT_BOT_URL')
+TECHSUPPORT_BOT_TOKEN = env.str('TECHSUPPORT_BOT_TOKEN')
 TELEGRAM_BOT_TOKEN = env.str('TELEGRAM_BOT_TOKEN')
 
 SMS_VERIFICATOIN_CODE_DIGITS = env.int('SMS_VERIFICATOIN_CODE_DIGITS')
@@ -201,6 +202,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

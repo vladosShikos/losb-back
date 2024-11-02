@@ -65,3 +65,9 @@ class UserPhoneVerificationSerializer(serializers.ModelSerializer):
 
 class BotUrlSerializer(serializers.Serializer):
     url = serializers.CharField()
+
+
+class UserAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('avatar_url',)
