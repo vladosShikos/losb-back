@@ -4,6 +4,7 @@ from random import SystemRandom
 
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import generics, status
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -41,7 +42,7 @@ from losb.schema import TelegramIdJWTSchema  # do not remove, needed for swagger
 class CityListView(generics.ListAPIView):
     serializer_class = CitySerializer
     permission_classes = [IsAuthenticated, ]
-    pagination_class = None
+    pagination_class = LimitOffsetPagination
     queryset = City.objects.all()
 
 
