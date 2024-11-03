@@ -46,9 +46,8 @@ class SmsRuService:
 
             if result.get('status') != 'OK':
                 # TODO: iterate over sms field, collecting erroneous status codes
-                raise exceptions.SmsDeliveryError(
-                    default_detail=f"Failed to send SMS: {result.get('status_text', 'Unknown error')}",
-                )
+                raise exceptions.SmsDeliveryError(f"SMS service unavailable: {result.get('status_text', 
+                                                                                         'Unknown error')}")
 
             return result
 

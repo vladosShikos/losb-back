@@ -18,7 +18,7 @@ class SmsVerificationService:
 
     def request_verification(self, code, number):
         # Check if phone is already verified
-        if self.user.phone.code == code and self.user.phone.number == number:
+        if self.user.phone.code == code[1:] and self.user.phone.number == number:
             raise exceptions.PhoneAlreadyVerified()
 
         # Check cooldown period
@@ -33,10 +33,11 @@ class SmsVerificationService:
             self.sms_service.send_sms(phone, message)
         except exceptions.SmsDeliveryError as e:
             # You might want to delete the verification code if SMS fails
-            self.user.sms_verification.delete()
+            if self.user.sms_verification:
+                self.user.sms_verification.delete()
             raise
 
-        self._save_verification(otp)
+        self._save_verification(otp, code, number)
 
         return otp
 
@@ -62,10 +63,14 @@ class SmsVerificationService:
                            f' before requesting a new SMS verification code.'
                 )
 
-    def _save_verification(self, otp):
-        serializer = SMSVerificationSerializer(data={'otp': otp})
+    def _save_verification(self, otp, code, number):
+        serializer = SMSVerificationSerializer(data={'otp': otp, 'user': self.user.id})
         serializer.is_valid(raise_exception=True)
-        self.user.sms_verification = serializer.save()
+        sms_verification = serializer.save()
+        sms_verification.phone_code = code
+        sms_verification.phone_number = number
+        sms_verification.save()
+        self.user.sms_verification = sms_verification
         self.user.save()
 
     def _check_verification_expiry(self):
@@ -88,7 +93,8 @@ class SmsVerificationService:
         serializer.is_valid(raise_exception=True)
 
         # TODO: Implement transaction handling here
-        self.user.number = serializer.save()
+        phone_instance = serializer.save()
+        self.user.phone = phone_instance
         self.user.save()
         self.user.sms_verification.delete()
 
