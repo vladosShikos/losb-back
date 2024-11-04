@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'drf_standardized_errors',
     'django_extensions',
     'debug_toolbar',
+    'corsheaders',
     *PROJECT_APPS
 ]
 
@@ -56,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
@@ -116,7 +118,7 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_standardized_errors.openapi.AutoSchema',
     'EXCEPTION_HANDLER': 'drf_standardized_errors.handler.exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'losb.api.v1.services.auth.ExampleAuthentication',#TODO: rename
+        'losb.api.v1.services.auth.ExampleAuthentication', #TODO: rename
         'rest_framework.authentication.SessionAuthentication'
     ],
     # 'DEFAULT_PERMISSION_CLASSES':[
@@ -127,6 +129,9 @@ REST_FRAMEWORK = {
 }
 DRF_STANDARDIZED_ERRORS = {'ENABLE_IN_DEBUG_FOR_UNHANDLED_EXCEPTIONS': True}
 INTERNAL_IPS = ['127.0.0.1',]
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 # SIMPLE_JWT = {
 #     # 'ACCESS_TOKEN_LIFETIME': timedelta(days=30),

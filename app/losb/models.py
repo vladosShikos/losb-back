@@ -12,6 +12,9 @@ from app.settings import SMS_VERIFICATOIN_CODE_DIGITS
 class City(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
+    class Meta:
+        verbose_name_plural = 'Cities'
+
     def __str__(self):
         return f'{self.name}'
 
@@ -23,8 +26,8 @@ class SMSVerification(models.Model):
 
 
 class Phone(models.Model):
-    code = models.CharField()
-    number = models.CharField(null=True, blank=True) #TODO: should regex validation be added?
+    code = models.CharField(max_length=4)
+    number = models.CharField(null=True, blank=True, max_length=15) #TODO: should regex validation be added?
 
     def __str__(self):
         return f'+{self.code}{self.number if self.number else '-not-verified'}'
@@ -82,7 +85,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     sms_verification = models.ForeignKey(SMSVerification, null=True, blank=True, on_delete=SET_NULL, related_name='user')
     avatar_url = models.ImageField('Аватар', upload_to='user/avatar/', blank=True, null=True, max_length=512)
-    birthday = models.DateField(null=True, default=None)
+    birthday = models.DateTimeField(null=True, default=None)
     location = models.ForeignKey(City, on_delete=PROTECT, related_name='user', blank=True, null=True)
 
     username = models.CharField(max_length=255, blank=True, null=True)

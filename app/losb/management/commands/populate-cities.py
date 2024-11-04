@@ -10,9 +10,9 @@ from losb.models import City
 class Command(BaseCommand):
     def handle(self, *args, **options):
         #TODO: Check what happens when file doesn't exist
-        with open(os.path.join(BASE_DIR, 'cities.csv')) as f:
+        with open(os.path.join(BASE_DIR, 'cities.csv'), encoding='utf-8') as f:
             reader = csv.reader(f)
             for row in reader:
                 city, created = City.objects.get_or_create(
-                    name=row[2]
+                    name=row[9]
                 )
