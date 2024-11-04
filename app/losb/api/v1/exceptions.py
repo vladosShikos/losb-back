@@ -36,10 +36,11 @@ class SmsVerificationAttemptsExceeded(APIException):
 
 
 class SmsVerificationFailed(APIException):
-    status_code = 403
-    default_detail = 'Sms verification failed'
+    status_code = 400
+    default_detail = 'Введён неверный код'
+    default_code = 'invalid_code'
 
 
 class SmsDeliveryError(APIException):
-    def __init__(self, default_detail):
-        self.default_detail = default_detail
+    status_code = 403
+    default_detail = 'Sms delivery failed'

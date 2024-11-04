@@ -4,7 +4,7 @@ from random import SystemRandom
 
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import generics, status
-from rest_framework.exceptions import APIException
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -42,7 +42,7 @@ from losb.schema import TelegramIdJWTSchema  # do not remove, needed for swagger
 class CityListView(generics.ListAPIView):
     serializer_class = CitySerializer
     permission_classes = [IsAuthenticated, ]
-    pagination_class = None
+    pagination_class = LimitOffsetPagination
     queryset = City.objects.all()
 
 
@@ -164,9 +164,8 @@ class UserPhoneUpdateView(APIView):
                 number=serializer.data['number'],
             )
         except exceptions.SmsDeliveryError as e:
-            raise APIException(
-                detail=str(e),
-                code='sms_delivery_failed'
+            raise exceptions.SmsDeliveryError(
+                default_detail=f"Failed to send SMS: {e}",
             )
 
         # TODO: remove otp from response, for debug only
@@ -211,10 +210,10 @@ class TechSupportAPIView(generics.RetrieveAPIView):
 
 
 @extend_schema_view(
-    patch=extend_schema(
+    post=extend_schema(
         request=UserAvatarSerializer,
         responses={
-            200: UserAvatarSerializer,
+            200: UserSerializer,
         },
         summary='Загрузить аватар пользователя',
         description='Загружает новый аватар в профиль пользователя',
@@ -224,12 +223,12 @@ class UserAvatarUpdateView(generics.UpdateAPIView):
     serializer_class = UserAvatarSerializer
     permission_classes = [IsAuthenticated, ]
     parser_classes = (MultiPartParser, FormParser)
-    http_method_names = ['patch']
+    http_method_names = ['post']
 
     def get_object(self):
         return self.request.user
 
-    def patch(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         user = self.get_object()
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -237,7 +236,7 @@ class UserAvatarUpdateView(generics.UpdateAPIView):
         user.avatar_url = serializer.validated_data['avatar_url']
         user.save()
 
-        return Response(serializer.data)
+        return Response(UserSerializer(user).data)
 
 
 @extend_schema_view(
